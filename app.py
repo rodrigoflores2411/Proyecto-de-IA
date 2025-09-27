@@ -1,90 +1,32 @@
-# app.py - VERSIÓN MÍNIMA PARA DIAGNÓSTICO
-
 import streamlit as st
-import sys
-import os
+import pandas as pd
+import numpy as np
 
-# Añadir el directorio actual al path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+st.set_page_config(
+    page_title="Diabetes Prediction",
+    layout="centered",  
+    initial_sidebar_state="collapsed"
+)
 
-st.title("🩺 Prueba de Dependencias - Diabetes Prediction")
-st.markdown("---")
+st.title("Predicción de Diabetes Tipo 2")
+st.write("Sistema basado en Machine Learning")
+age = st.slider("Edad", 20, 80, 45)
+glucose = st.slider("Glucosa", 70, 200, 100)
+bmi = st.slider("BMI", 18.0, 40.0, 25.0)
 
-# Probar importaciones básicas
-st.header("1. Probando importaciones básicas")
-
-try:
-    import pandas as pd
-    st.success("✅ pandas importado correctamente")
-    st.write(f"Versión pandas: {pd.__version__}")
-except ImportError as e:
-    st.error(f"❌ Error importando pandas: {e}")
-
-try:
-    import numpy as np
-    st.success("✅ numpy importado correctamente")
-    st.write(f"Versión numpy: {np.__version__}")
-except ImportError as e:
-    st.error(f"❌ Error importando numpy: {e}")
-
-try:
-    import joblib
-    st.success("✅ joblib importado correctamente")
-    st.write(f"Versión joblib: {joblib.__version__}")
-except ImportError as e:
-    st.error(f"❌ Error importando joblib: {e}")
-
-# Probar importaciones de ML
-st.header("2. Probando importaciones de ML")
-
-try:
-    from sklearn.ensemble import RandomForestClassifier
-    st.success("✅ scikit-learn importado correctamente")
-except ImportError as e:
-    st.error(f"❌ Error importando scikit-learn: {e}")
-
-try:
-    import xgboost as xgb
-    st.success("✅ xgboost importado correctamente")
-except ImportError as e:
-    st.error(f"❌ Error importando xgboost: {e}")
-
-# Probar nuestras propias importaciones
-st.header("3. Probando importaciones personalizadas")
-
-try:
-    # Intentar importar config
-    from config import TARGET_NAME, FEATURE_NAMES
-    st.success("✅ config.py importado correctamente")
-    st.write(f"Target: {TARGET_NAME}")
-    st.write(f"Features: {FEATURE_NAMES}")
-except Exception as e:
-    st.error(f"❌ Error importando config: {e}")
-
-try:
-    # Intentar importar helpers
-    from utils.helpers import get_risk_recommendations
-    st.success("✅ helpers.py importado correctamente")
+if st.button("Calcular Riesgo"):
+    # Cálculo simple de ejemplo 
+    risk_score = (glucose - 70) / 130 * 0.5 + (bmi - 18) / 22 * 0.3 + (age - 20) / 60 * 0.2
+    risk_percentage = min(risk_score * 100, 95)
     
-    # Probar función
-    risk_info = get_risk_recommendations(0.5)
-    st.write(f"Recomendación de prueba: {risk_info['level']}")
-except Exception as e:
-    st.error(f"❌ Error importando helpers: {e}")
+    st.progress(risk_percentage / 100)
+    st.write(f"Riesgo estimado: {risk_percentage:.1f}%")
+    
+    if risk_percentage < 30:
+        st.success("Riesgo bajo")
+    elif risk_percentage < 70:
+        st.warning("Riesgo moderado")
+    else:
+        st.error("Riesgo alto")
 
-# Información del sistema
-st.header("4. Información del sistema")
-
-st.write(f"Directorio de trabajo: {os.getcwd()}")
-st.write(f"Archivos en directorio: {os.listdir('.')}")
-
-if os.path.exists('requirements.txt'):
-    with open('requirements.txt', 'r') as f:
-        requirements = f.read()
-    st.text_area("Contenido de requirements.txt:", requirements, height=200)
-else:
-    st.error("❌ requirements.txt no encontrado")
-
-# Footer
-st.markdown("---")
-st.markdown("**App de diagnóstico - Si todas las importaciones son ✅, la app funciona**")
+st.info("Esta es una versión simplificada para evitar errores de interfaz.")
