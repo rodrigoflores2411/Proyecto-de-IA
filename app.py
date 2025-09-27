@@ -5,112 +5,124 @@ import joblib
 import sys
 import os
 
-# Añadir rutas para imports - CORREGIDO
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(current_dir)
-
-from config import MODEL_SAVE_PATH, RISK_THRESHOLDS, FEATURE_NAMES
-
-# Configuración de la página
 st.set_page_config(
     page_title="Predicción de Diabetes Tipo 2",
     page_icon="🩺",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
-
 
 # Título principal
 st.title("🩺 Sistema de Predicción de Riesgo de Diabetes Tipo 2")
 st.markdown("---")
-
-# Sidebar con información
-st.sidebar.title("Información del Sistema")
-st.sidebar.info("""
-**Características del modelo:**
-- ✅ Random Forest, XGBoost y Redes Neuronales
-- ✅ Precisión: >75% (AUC > 0.75)
-- ✅ Datos clínicos validados
-- ✅ Interfaz médica intuitiva
-""")
-
-# Cargar modelo y escalador
+# Sidebar
+st.sidebar.title("Información")
+st.sidebar.info("Sistema de ML para predicción de diabetes")
+#Cargar el modelo
 @st.cache_resource
 def load_model():
     try:
-        model = joblib.load(f'{MODEL_SAVE_PATH}best_model.pkl')
-        scaler = joblib.load(f'{MODEL_SAVE_PATH}scaler.pkl')
+
+        model_paths = [
+            'results/models/best_model.pkl',
+            'best_model.pkl',
+            'model.pkl'
+        ]
+        
+        scaler_paths = [
+            'results/models/scaler.pkl',
+            'scaler.pkl'
+        ]
+        
+        model = None
+        scaler = None
+        
+        # Buscar modelo
+        for path in model_paths:
+            if os.path.exists(path):
+                model = joblib.load(path)
+                st.sidebar.success(f"✅ Modelo cargado: {path}")
+                break
+        
+        # Buscar scaler
+        for path in scaler_paths:
+            if os.path.exists(path):
+                scaler = joblib.load(path)
+                st.sidebar.success(f"✅ Scaler cargado: {path}")
+                break
+        
         return model, scaler
+        
     except Exception as e:
-        st.error(f"Error cargando el modelo: {e}")
+        st.sidebar.error(f"❌ Error cargando modelo: {e}")
         return None, None
 
 model, scaler = load_model()
 
-# Si el modelo no está cargado, mostrar opción para entrenar
+# Modelo a entrenar
 if model is None:
-    st.warning("⚠️ Modelo no encontrado. Por favor, entrena el modelo primero.")
+    st.warning("""
+    ⚠️ **Modelo no encontrado**
     
-    if st.button("🎯 Entrenar Modelo (Ejecutar Pipeline)"):
-        with st.spinner("Entrenando modelo... Esto puede tomar unos minutos"):
-            try:
-                from main import main
-                main()
-                st.success("✅ Modelo entrenado exitosamente!")
-                st.rerun()
-            except Exception as e:
-                st.error(f"Error entrenando modelo: {e}")
+    Para usar la aplicación, primero debes entrenar el modelo:
+    1. Ejecuta `python main.py` localmente
+    2. Sube los archivos `.pkl` generados a la carpeta `results/models/`
+    3. Recarga esta aplicación
+    """)
     
-    st.stop()
+    st.info("""
+    **Archivos necesarios:**
+    - `results/models/best_model.pkl`
+    - `results/models/scaler.pkl`
+    """)
+    
+    # Opción para generar datos de ejemplo
+    if st.button("🎯 Usar Datos de Ejemplo (Demo)"):
+        st.session_state.demo_mode = True
+        st.success("✅ Modo demo activado. Puedes probar la interfaz.")
 
-# Interfaz principal de predicción
+# Interfaz de predicción
 st.header("🎯 Predicción de Riesgo Individual")
+
+# Definir características (evitar importar de config)
+FEATURES = [
+    "Pregnancies", "Glucose", "BloodPressure", "SkinThickness",
+    "Insulin", "BMI", "DiabetesPedigreeFunction", "Age"
+]
 
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("Datos Clínicos del Paciente")
-    
-    pregnancies = st.slider("Número de embarazos", 0, 20, 1,
-                           help="Número total de embarazos")
-    
-    glucose = st.slider("Glucosa plasmática (mg/dL)", 0, 200, 100,
-                       help="Concentración de glucosa a 2 horas")
-    
-    blood_pressure = st.slider("Presión arterial (mm Hg)", 0, 150, 70,
-                              help="Presión arterial diastólica")
-    
-    skin_thickness = st.slider("Espesor pliegue cutáneo (mm)", 0, 100, 20,
-                              help="Espesor del pliegue cutáneo del tríceps")
+    pregnancies = st.slider("Número de embarazos", 0, 20, 1)
+    glucose = st.slider("Glucosa plasmática (mg/dL)", 0, 200, 100)
+    blood_pressure = st.slider("Presión arterial (mm Hg)", 0, 150, 70)
+    skin_thickness = st.slider("Espesor pliegue cutáneo (mm)", 0, 100, 20)
 
 with col2:
-    st.subheader(" ")
-    st.write("")  # Espaciador
-    
-    insulin = st.slider("Insulina sérica (mu U/ml)", 0, 900, 80,
-                       help="Insulina sérica a 2 horas")
-    
-    bmi = st.slider("Índice de masa corporal (kg/m²)", 0.0, 70.0, 25.0, 0.1,
-                   help="BMI calculado como peso/(altura²)")
-    
-    diabetes_pedigree = st.slider("Función de pedigrí diabetes", 0.0, 2.5, 0.5, 0.01,
-                                 help="Funcióń que resume historia familiar")
-    
-    age = st.slider("Edad (años)", 0, 120, 30,
-                   help="Edad de la paciente")
+    insulin = st.slider("Insulina sérica (mu U/ml)", 0, 900, 80)
+    bmi = st.slider("Índice de masa corporal (kg/m²)", 0.0, 70.0, 25.0, 0.1)
+    diabetes_pedigree = st.slider("Función de pedigrí diabetes", 0.0, 2.5, 0.5, 0.01)
+    age = st.slider("Edad (años)", 0, 120, 30)
 
 # Botón de predicción
-if st.button("🔍 Predecir Riesgo", type="primary", use_container_width=True):
+if st.button("🔍 Predecir Riesgo", type="primary"):
+    
+    if model is None and not st.session_state.get('demo_mode', False):
+        st.error("❌ No hay modelo disponible para hacer predicciones")
+        st.stop()
+    
     # Preparar datos de entrada
     input_data = np.array([[pregnancies, glucose, blood_pressure, skin_thickness,
                           insulin, bmi, diabetes_pedigree, age]])
     
-    # Escalar datos
-    input_scaled = scaler.transform(input_data)
-    
-    # Realizar predicción
     try:
-        probability = model.predict_proba(input_scaled)[0][1]
+        if st.session_state.get('demo_mode', False):
+            # Modo demo - simular predicción
+            probability = 0.45  # Valor de ejemplo
+            st.info("🔶 **MODO DEMO**: Usando datos de ejemplo")
+        else:
+            # Escalar y predecir
+            input_scaled = scaler.transform(input_data)
+            probability = model.predict_proba(input_scaled)[0][1]
         
         # Mostrar resultados
         st.success("✅ Predicción completada")
@@ -122,16 +134,14 @@ if st.button("🔍 Predecir Riesgo", type="primary", use_container_width=True):
             st.metric("Probabilidad de Diabetes", f"{probability:.2%}")
         
         with col2:
-            # Barra de progreso
             st.write("Nivel de Riesgo")
             st.progress(float(probability))
         
         with col3:
-            # Indicador de riesgo
-            if probability < RISK_THRESHOLDS['low']:
+            if probability < 0.3:
                 risk_level = "BAJO"
                 risk_color = "🟢"
-            elif probability < RISK_THRESHOLDS['medium']:
+            elif probability < 0.7:
                 risk_level = "MODERADO"
                 risk_color = "🟡"
             else:
@@ -141,115 +151,35 @@ if st.button("🔍 Predecir Riesgo", type="primary", use_container_width=True):
             st.metric("Nivel de Riesgo", f"{risk_color} {risk_level}")
         
         # Recomendaciones
-        st.subheader("💡 Recomendaciones Médicas")
+        st.subheader("💡 Recomendaciones")
         
         if risk_level == "BAJO":
-            st.info("""
-            **Riesgo Bajo - Mantener prevención:**
-            - Continuar con estilo de vida saludable
-            - Control anual de glucosa en sangre
-            - Mantener peso adecuado y actividad física regular
-            """)
+            st.info("**Riesgo Bajo** - Mantener estilo de vida saludable")
         elif risk_level == "MODERADO":
-            st.warning("""
-            **Riesgo Moderado - Vigilancia activa:**
-            - Consultar con médico para evaluación completa
-            - Realizar prueba de tolerancia a la glucosa
-            - Implementar cambios en dieta y ejercicio
-            - Control trimestral de parámetros
-            """)
+            st.warning("**Riesgo Moderado** - Consultar con médico")
         else:
-            st.error("""
-            **Riesgo Alto - Acción inmediata:**
-            - Consulta médica URGENTE
-            - Realizar pruebas diagnósticas completas
-            - Implementar plan de tratamiento supervisado
-            - Control mensual estricto
-            """)
-        
-        # Detalles técnicos (expandible)
-        with st.expander("📊 Detalles Técnicos de la Predicción"):
-            st.write(f"**Probabilidad de NO diabetes:** {1-probability:.2%}")
-            st.write(f"**Probabilidad de diabetes:** {probability:.2%}")
-            st.write(f"**Umbral de clasificación:** 0.5")
-            st.write(f"**Modelo utilizado:** {type(model).__name__}")
+            st.error("**Riesgo Alto** - Acción médica inmediata")
             
-            # Características ingresadas
-            st.write("**Datos ingresados:**")
-            feature_values = {
-                'Embarazos': pregnancies,
-                'Glucosa': f"{glucose} mg/dL",
-                'Presión Arterial': f"{blood_pressure} mm Hg",
-                'Pliegue Cutáneo': f"{skin_thickness} mm",
-                'Insulina': f"{insulin} mu U/ml",
-                'BMI': f"{bmi} kg/m²",
-                'Pedigrí Diabetes': diabetes_pedigree,
-                'Edad': f"{age} años"
-            }
-            
-            for feature, value in feature_values.items():
-                st.write(f"- {feature}: {value}")
-    
     except Exception as e:
-        st.error(f"❌ Error en la predicción: {e}")
+        st.error(f"❌ Error en la predicción: {str(e)}")
 
-# Sección de lote (opcional)
-st.markdown("---")
-st.header("📁 Predicción por Lote")
-
-uploaded_file = st.file_uploader("Subir archivo CSV con datos de pacientes", 
-                                type=['csv'])
-
-if uploaded_file is not None:
-    try:
-        # Leer archivo
-        batch_data = pd.read_csv(uploaded_file)
-        
-        # Verificar columnas
-        required_cols = FEATURE_NAMES
-        if all(col in batch_data.columns for col in required_cols):
-            st.success(f"✅ Archivo cargado: {len(batch_data)} pacientes")
-            
-            # Preprocesar y predecir
-            X_batch = batch_data[required_cols]
-            X_batch_scaled = scaler.transform(X_batch)
-            probabilities = model.predict_proba(X_batch_scaled)[:, 1]
-            
-            # Añadir resultados al DataFrame
-            results_df = batch_data.copy()
-            results_df['Probabilidad_Diabetes'] = probabilities
-            results_df['Riesgo'] = results_df['Probabilidad_Diabetes'].apply(
-                lambda p: 'BAJO' if p < 0.3 else 'MODERADO' if p < 0.7 else 'ALTO'
-            )
-            
-            # Mostrar resultados
-            st.subheader("Resultados del Lote")
-            st.dataframe(results_df)
-            
-            # Estadísticas
-            risk_counts = results_df['Riesgo'].value_counts()
-            st.write("**Distribución de riesgos:**")
-            for riesgo, count in risk_counts.items():
-                st.write(f"- {riesgo}: {count} pacientes ({count/len(results_df)*100:.1f}%)")
-            
-            # Descargar resultados
-            csv = results_df.to_csv(index=False)
-            st.download_button(
-                label="📥 Descargar Resultados en CSV",
-                data=csv,
-                file_name="resultados_diabetes.csv",
-                mime="text/csv"
-            )
-            
-        else:
-            st.error(f"❌ El archivo debe contener las columnas: {', '.join(required_cols)}")
+# Información adicional
+with st.expander("📊 Información Técnica"):
+    st.write("""
+    **Características del sistema:**
+    - Algoritmos: Random Forest, XGBoost, Redes Neuronales
+    - Dataset: Pima Indians Diabetes Database
+    - Métricas: Accuracy, Precision, Recall, F1-Score, AUC-ROC
     
-    except Exception as e:
-        st.error(f"❌ Error procesando archivo: {e}")
+    **Parámetros utilizados:**
+    - Glucosa, Presión arterial, BMI, Edad, etc.
+    """)
+    
+    if model is not None:
+        st.write(f"**Modelo cargado:** {type(model).__name__}")
 
 # Footer
 st.markdown("---")
 st.markdown(
-    "**Proyecto de Inteligencia Artificial - Universidad Privada Antenor Orrego** • "
-    "Integrantes: Flores Alvarez, Moreno Rodríguez, Soto Gonzales"
+    "**Proyecto de Inteligencia Artificial - Universidad Privada Antenor Orrego**"
 )
