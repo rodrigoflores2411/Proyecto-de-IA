@@ -1,12 +1,8 @@
-# data/loader.py - Actualizado con Kaggle Hub
-
 import pandas as pd
 import numpy as np
 import os
 import sys
-import kagglehub  # Nueva importación
-
-# Añadir path para importar config
+import kagglehub 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from config import COLUMN_NAMES, DATASET_SOURCES, TARGET_NAME
