@@ -1,13 +1,11 @@
-from sklearn.ensemble import RandomForestClassifier  # IMPORT CORREGIDO
-from sklearn.neural_network import MLPClassifier    # IMPORT CORREGIDO
+from sklearn.ensemble import RandomForestClassifier  
+from sklearn.neural_network import MLPClassifier 
 from xgboost import XGBClassifier
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score  # IMPORT CORREGIDO
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score 
 import joblib
 import pandas as pd
 import os
 import sys
-
-# Añadir path para importar config
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from config import MODEL_PARAMS, MODEL_SAVE_PATH
