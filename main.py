@@ -1,10 +1,7 @@
-# main.py - Actualizado para Kaggle Hub
-
 import pandas as pd
 import os
 import sys
 
-# Añadir el directorio raíz al path para imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from data.loader import DataLoader
@@ -18,12 +15,8 @@ def main():
     """Función principal que ejecuta el pipeline completo"""
     print("🩺 INICIANDO SISTEMA DE PREDICCIÓN DE DIABETES")
     print("=" * 50)
-    
-    # Paso 1: Cargar datos desde Kaggle Hub
     print("\n1️⃣  CARGANDO DATOS DESDE KAGGLE HUB...")
     loader = DataLoader()
-    
-    # Intentar cargar desde Kaggle, con fallback a URL
     df = loader.load_data(source='kaggle')
     
     if df is None:
